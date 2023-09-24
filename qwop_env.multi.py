@@ -1,7 +1,6 @@
 from multiprocessing import Process, Queue
 from gym import Env
 from qwop_env import QWOP_Env
-from score_detector import ScoreDetector
 import numpy as np
 import time
 import torch
@@ -16,19 +15,16 @@ def qwop_env(command_queue, result_queue):
         if command == "quit":
             return
         elif command == "reset":
-            env.reset()
+            state = env.reset()
         elif isinstance(command, int):
-            env.action(command)
+            state = env.step(command)
         
-        state = env.state()
         result_queue.put(state)
 
 class QWOP_Env_Multi(Env):
     def __init__(self, num=1, headless=True):
         super().__init__()
         self.num = num
-
-        self.score_detector = ScoreDetector()
 
         self.command_queues: list[Queue] = [Queue(2) for _ in range(num)]
         self.result_queues: list[Queue] = [Queue(2) for _ in range(num)]
@@ -64,12 +60,6 @@ class QWOP_Env_Multi(Env):
         action: (thighs, calves)
         - thighs [0: no thigh, 1: q, 2]
         '''
-
-        self.time += 0.2
-        time.sleep(max(self.time - time.time(), 0))
-
-        start = time.time()
-
         for i in range(self.num):
             self.command_queues[i].put(actions[i].item())
 
@@ -82,31 +72,15 @@ class QWOP_Env_Multi(Env):
             observs.append(observ)
             rewards.append(reward)
             dones.append(done)
-        
-        # self.score_detector.score()
 
         return np.stack(observs), rewards, dones
 
-    def reward(self, screenshot, i):
-        score = self.score_detector.score(screenshot)
-        if score == None:
-            score = self.sum_dists[i] / 4
-        # head_height = self.score_detector.head_height(screenshot)
-        # reward += math.tanh((130 - head_height) / 10)
-        reward = max(score - self.sum_dists[i] / 4, 0)
-
-        self.sum_dists[i] += score
-        self.sum_dists[i] -= self.dists[i].popleft()
-        self.dists[i].append(score)
-
-        # reward += clip(score - (self.sum_dist / 4), 1, -1)
-        return reward
-
 if __name__ == '__main__':
-    env = Multi_QWOP_Env(num=3, headless=False)
+    env_count = 3
+    env = QWOP_Env_Multi(num=env_count, headless=False)
     print(env.reset().shape)
     for i in range(100):
-        actions = torch.randint(0, 8, (3,))
+        actions = torch.randint(0, 8, (env_count,))
         state, reward, done = env.step(actions)
         print(reward)
     

@@ -2,6 +2,9 @@ import torch
 import numpy as np
 import cv2
 
+def to_black_white_tensor(image: torch.Tensor):
+    return torch.tensor(image.mean(-1) / 255 > 0.5).float()
+
 class Kernel:
     def __init__(self, filter):
         filter = torch.tensor(filter).float()
@@ -50,15 +53,13 @@ class ScoreDetector:
         return self
     
     def score(self, images):
-        images = images[:, 19:19+32, 200:-200] > 0.5
+        images = to_black_white_tensor(images[:, 19:19+32, 200:-200])
 
-        images = torch.tensor(images).float()
-        metre_matches = self.metres_text.match(images)
-        metre_index = torch.argmax(metre_matches.float(), dim=-1).view(-1)
+        metre_matches = self.metres_text.match(images, 0.7).float()
+        metre_index = torch.argmax(metre_matches, dim=-1).view(-1)
 
         distances = []
         for i, e in enumerate(metre_index):
-            print(i, e)
             s = e - 80
             distances.append(images[i, :, s:e])
         images = torch.stack(distances)
@@ -67,14 +68,17 @@ class ScoreDetector:
         result = torch.zeros((images.shape[0], images.shape[2]), dtype=torch.int, device = self.device)
         # find period sign
         matches = self.period.match(images)
-        result[:, :1-self.period.kernel.shape[-1]] += matches * 46
+        matches = torch.conv1d(matches.float(), torch.tensor([[[1., -1.]]])) > 0 # dedup
+        result[:, :-self.period.kernel.shape[-1]] += matches * 46
         # find negate sign
         matches = self.negate.match(images)
-        result[:, :1-self.negate.kernel.shape[-1]] += matches * 45
+        matches = torch.conv1d(matches.float(), torch.tensor([[[1., -1.]]])) > 0 # dedup
+        result[:, :-self.negate.kernel.shape[-1]] += matches * 45
         # find where digits are
         for i, digit in enumerate(self.digits):
             matches = digit.match(images)
-            result[:, :1-digit.kernel.shape[-1]] += matches * (i + 48)
+            matches = torch.conv1d(matches.float(), torch.tensor([[[1., -1.]]])) > 0 # dedup
+            result[:, :-digit.kernel.shape[-1]] += matches * (i + 48)
 
         numbers = []
         # reconstruct number:
@@ -87,8 +91,9 @@ class ScoreDetector:
         return numbers
     
     def done(self, image):
-        image = torch.tensor(image[:, 150:250, 300:340] > 0.5).float()
-        done_match = self.done_img.match(image)
+        image = to_black_white_tensor(image[:, 150:250, 300:340])
+
+        done_match = self.done_img.match(image, 0.7)
         return done_match.squeeze()
     
     def head_height(self, image):
@@ -102,4 +107,11 @@ class ScoreDetector:
         return result.min().item()
 
 if __name__ == "__main__":
-    pass
+    detector = ScoreDetector()
+    images = cv2.imread("res/0.png")
+
+    print(images.shape)
+    
+    res = detector.score(np.stack([images]))
+    print(res)
+
