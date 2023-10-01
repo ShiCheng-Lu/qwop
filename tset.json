@@ -1,0 +1,99 @@
+{
+    "head": {
+        "angle": 0.06448415835225099,
+        "linear_velocity_x": 0,
+        "linear_velocity_y": 0,
+        "position_x": 3.888130278719558,
+        "position_y": -5.621802929095265
+    },
+    "joints": {
+        "leftAnkle": 0.013760359244408438,
+        "leftElbow": 0.014603733201116409,
+        "leftHip": 0.04042597985780216,
+        "leftKnee": -0.03201491344783003,
+        "leftShoulder": -0.06107618328912556,
+        "neck": -0.006937463918854858,
+        "rightAnkle": 0.2221580440618709,
+        "rightElbow": -0.06370581330517755,
+        "rightHip": -0.017032626664736483,
+        "rightKnee": -0.045512331552620466,
+        "rightShoulder": 0.05616273507970182
+    },
+    "leftArm": {
+        "angle": 0.9040095895272826,
+        "linear_velocity_x": 0,
+        "linear_velocity_y": 0,
+        "position_x": 4.417861014480877,
+        "position_y": -2.806563606410589
+    },
+    "leftCalf": {
+        "angle": -1.5903971528225265,
+        "linear_velocity_x": 0,
+        "linear_velocity_y": 0,
+        "position_x": 3.12585731974087,
+        "position_y": 5.525511655361298
+    },
+    "leftFoot": {
+        "angle": 0.12027524643408766,
+        "linear_velocity_x": 0,
+        "linear_velocity_y": 0,
+        "position_x": 3.926921842806667,
+        "position_y": 8.08884032049622
+    },
+    "leftForearm": {
+        "angle": -1.2049772618421237,
+        "linear_velocity_x": 0,
+        "linear_velocity_y": 0,
+        "position_x": 5.830008603424893,
+        "position_y": -2.8733539631159584
+    },
+    "leftThigh": {
+        "angle": -2.0177234426823394,
+        "linear_velocity_x": 0,
+        "linear_velocity_y": 0,
+        "position_x": 2.5648987628203876,
+        "position_y": 1.648090668682522
+    },
+    "rightArm": {
+        "angle": -0.5222217404634386,
+        "linear_velocity_x": 0,
+        "linear_velocity_y": 0,
+        "position_x": 1.1812303663272852,
+        "position_y": -3.5000256518601014
+    },
+    "rightCalf": {
+        "angle": -0.7588859967104447,
+        "linear_velocity_x": 0,
+        "linear_velocity_y": 0,
+        "position_x": -0.07253905736790486,
+        "position_y": 5.347881871063159
+    },
+    "rightFoot": {
+        "angle": 0.5897605418219602,
+        "linear_velocity_x": 0,
+        "linear_velocity_y": 0,
+        "position_x": -1.1254742643908706,
+        "position_y": 7.567193169625567
+    },
+    "rightForearm": {
+        "angle": -1.7553358283857299,
+        "linear_velocity_x": 0,
+        "linear_velocity_y": 0,
+        "position_x": 0.4078206420797428,
+        "position_y": -1.0599953233084172
+    },
+    "rightThigh": {
+        "angle": 1.4849422964528027,
+        "linear_velocity_x": 0,
+        "linear_velocity_y": 0,
+        "position_x": 1.6120186135678773,
+        "position_y": 2.0615320561881516
+    },
+    "torso": {
+        "angle": -1.2514497119301329,
+        "linear_velocity_x": 0,
+        "linear_velocity_y": 0,
+        "position_x": 2.5111726226000157,
+        "position_y": -1.8709517533957938
+    }
+}

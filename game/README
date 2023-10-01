@@ -1,0 +1,3 @@
+local game hosting is taken from https://github.com/Wesleyliao/QWOP-RL
+
+this modified version of QWOP allows direct access to the scores and states of the game.

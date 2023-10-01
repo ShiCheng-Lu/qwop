@@ -4,9 +4,10 @@ from qwop_env import QWOP_Env
 import numpy as np
 import time
 import torch
+import game_host
 
-def qwop_env(command_queue, result_queue):
-    env = QWOP_Env(headless=True)
+def qwop_env(command_queue, result_queue, headless):
+    env = QWOP_Env(headless=headless)
     # send something through result_queue to signal intiailization completion
     result_queue.put(0)
 
@@ -30,7 +31,7 @@ class QWOP_Env_Multi(Env):
         self.result_queues: list[Queue] = [Queue(2) for _ in range(num)]
         self.processes: list[Process] = []
         for i in range(num):
-            process = Process(target=qwop_env, args=(self.command_queues[i], self.result_queues[i]))
+            process = Process(target=qwop_env, args=(self.command_queues[i], self.result_queues[i], headless))
             process.start()
             self.processes.append(process)
         print("created processes")
@@ -76,12 +77,19 @@ class QWOP_Env_Multi(Env):
         return np.stack(observs), rewards, dones
 
 if __name__ == '__main__':
-    env_count = 3
-    env = QWOP_Env_Multi(num=env_count, headless=False)
+    game_host.start()
+    env_count = 2
+    env = QWOP_Env_Multi(num=env_count, headless=True)
+    time.sleep(5)
+    start = time.time()
     print(env.reset().shape)
     for i in range(100):
         actions = torch.randint(0, 8, (env_count,))
         state, reward, done = env.step(actions)
-        print(reward)
+        # print(reward)
+        end = time.time()
+        print(end - start)
+        start = end
     
     env.free()
+    game_host.end()

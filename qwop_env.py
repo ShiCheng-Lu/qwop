@@ -21,6 +21,20 @@ class QWOP_Env(Env):
             options.add_argument('--headless')
         options.add_argument("--mute-audio")
         options.add_argument("--window-size=700,600")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-renderer-backgrounding")
+        options.add_argument("--disable-background-timer-throttling")
+        options.add_argument("--disable-backgrounding-occluded-windows")
+        options.add_argument("--disable-client-side-phishing-detection")
+        options.add_argument("--disable-crash-reporter")
+        options.add_argument("--disable-oopr-debug-crash-dump")
+        options.add_argument("--no-crash-upload")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-extensions")
+        options.add_argument("--disable-low-res-tiling")
+        options.add_argument("--log-level=3")
+        options.add_argument("--silent")
 
         self.browser = Chrome(options=options)
         self.browser.get(URL)
@@ -35,6 +49,7 @@ class QWOP_Env(Env):
         self.time = None
 
         self.last_torso_x = 0
+        self.feet_calf_limit = 1
 
     def screenshot(self):
         image = Image.open(io.BytesIO(self.game.screenshot_as_png))
@@ -61,43 +76,34 @@ class QWOP_Env(Env):
     def snapshot(self):
         print(self.browser.execute_script("return globalbodystate;"))
 
-    def ss(self):
-        start = time.time()
-        
-        
-        # image = Image.open(io.BytesIO(self.game.screenshot_as_png))
-
+    def ss(self): # using canvas.context("webgl").readPixels(), this is a lot faster than self.screenshot
         image = self.browser.execute_script('return getImage();')
-        # image = np.fromiter(map(ord, image), dtype=np.uint8, count=96000)
-        image = np.array(list(map(ord, image)))
-        # iamge = np.array(image)
-
-        print(time.time() - start)
-
-        # from matplotlib import pyplot as plt
-        # plt.imshow(image.reshape((100, 160, 3)))
-        # plt.gca().invert_yaxis()
-        # plt.show()
-
-        print(len(image), image[:10])
+        return np.array(list(map(ord, image))).reshape((100, 160, 3))
 
     def state(self):
         body_state = self.browser.execute_script("return globalbodystate;")
+        game_state = self.browser.execute_script("return globalgamestate;")
 
         state = np.array([value for part in body_state.values()
                          for value in part.values()], dtype=float)
 
         torso_x = body_state['torso']['position_x']
-        reward = max(torso_x - self.last_torso_x, 0)
-        
-        # reward for 
+        reward = 0
+        reward += max(torso_x - self.last_torso_x, 0)
+        # reward += 0.1
+    
+        # reward += body_state['head']['position_y'] / 10
+        # left_foot_y = body_state['leftFoot']['position_y']
+        # right_foot_y = body_state['rightFoot']['position_y']
+        # if ((left_foot_y > 7) != (right_foot_y > 7)): # reward only one foot on the ground
+        #     reward += 1
 
         self.last_torso_x = torso_x
 
-        bad_pos = (body_state['leftFoot']['position_y'] < body_state['leftCalf']['position_y'] or
-                   body_state['rightFoot']['position_y'] < body_state['rightCalf']['position_y'])
+        # bad_pos = (body_state['leftFoot']['position_y'] - body_state['leftCalf']['position_y'] < self.feet_calf_limit or
+        #            body_state['rightFoot']['position_y'] - body_state['rightCalf']['position_y'] < self.feet_calf_limit)
 
-        self.done = self.done or bad_pos
+        self.done = self.done or game_state["gameEnded"] or game_state["gameOver"] # or bad_pos 
 
         return (state, reward, self.done)
 
@@ -144,5 +150,13 @@ if __name__ == "__main__":
     game_host.start()
     env = QWOP_Env(headless=False)
     env.reset()
-    for i in range(10): env.ss()
+    start = time.time()
+    print(env.reset().shape)
+    for i in range(100):
+        actions = 0
+        state, reward, done = env.step(actions)
+        # print(reward)
+        end = time.time()
+        print(end - start)
+        start = end
     # game_host.end()
