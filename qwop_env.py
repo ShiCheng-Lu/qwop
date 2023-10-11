@@ -46,7 +46,7 @@ class QWOP_Env(Env):
 
         self.game_image = self.screenshot()
         self.done = False
-        self.time = None
+        self.time = 0
 
         self.last_torso_x = 0
         self.feet_calf_limit = 1
@@ -69,7 +69,7 @@ class QWOP_Env(Env):
         key_actions.send_keys('r')
         key_actions.perform()
 
-        self.time = None  # time.time()
+        self.time = 0  # time.time()
 
         return self.state()[0]
 
@@ -78,32 +78,26 @@ class QWOP_Env(Env):
 
     def ss(self): # using canvas.context("webgl").readPixels(), this is a lot faster than self.screenshot
         image = self.browser.execute_script('return getImage();')
-        return np.array(list(map(ord, image))).reshape((100, 160, 3))
+        array = np.array(list(map(ord, image)))
+        return np.rollaxis(array.reshape((100, 160, 3)), 2, 0)
 
     def state(self):
         body_state = self.browser.execute_script("return globalbodystate;")
         game_state = self.browser.execute_script("return globalgamestate;")
-
-        state = np.array([value for part in body_state.values()
-                         for value in part.values()], dtype=float)
+        
+        self.done = self.done or game_state["gameEnded"] or game_state["gameOver"] # or bad_pos 
 
         torso_x = body_state['torso']['position_x']
         reward = 0
-        reward += max(torso_x - self.last_torso_x, 0)
-        # reward += 0.1
-    
-        # reward += body_state['head']['position_y'] / 10
-        # left_foot_y = body_state['leftFoot']['position_y']
-        # right_foot_y = body_state['rightFoot']['position_y']
-        # if ((left_foot_y > 7) != (right_foot_y > 7)): # reward only one foot on the ground
-        #     reward += 1
-
-        self.last_torso_x = torso_x
 
         # bad_pos = (body_state['leftFoot']['position_y'] - body_state['leftCalf']['position_y'] < self.feet_calf_limit or
         #            body_state['rightFoot']['position_y'] - body_state['rightCalf']['position_y'] < self.feet_calf_limit)
 
-        self.done = self.done or game_state["gameEnded"] or game_state["gameOver"] # or bad_pos 
+        if not self.done:
+            reward += max(torso_x - self.last_torso_x, 0)
+        self.last_torso_x = torso_x
+
+        state = self.ss()
 
         return (state, reward, self.done)
 
@@ -141,8 +135,15 @@ class QWOP_Env(Env):
         action_chain.perform()
 
     def step(self, action):
+        current = time.time()
+        self.time += (1 / 6)
+        sleep = self.time - current
+        if sleep > 0:
+            time.sleep(sleep)
+        else:
+            self.time = current
+        
         self.action(action)
-        time.sleep(0.1)
         return self.state()
 
 import game_host
